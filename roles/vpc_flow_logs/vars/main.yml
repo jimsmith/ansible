@@ -1,0 +1,4 @@
+---
+# vars file for vpc_flow_logs
+VPCId:
+region:

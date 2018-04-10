@@ -1,0 +1,116 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "Enable AWS config.",
+  "Resources" : {
+    "NotificationTopic": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "DisplayName" : "Config Topic",
+        "TopicName" : "Config-Topic"
+      }
+    },
+    "ConfigBucket":{
+      "Type" : "AWS::S3::Bucket",
+      "Properties" : {
+        "BucketName" : { "Fn::Join" : ["", ["aws-config-bucket-", {"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"}]]}
+      }
+    },
+    "DeliveryChannel": {
+      "Type": "AWS::Config::DeliveryChannel",
+      "DependsOn":["ConfigIAMRole","ConfigPolicy"],
+      "Properties": {
+        "ConfigSnapshotDeliveryProperties": {
+          "DeliveryFrequency": "Six_Hours"
+        },
+        "S3BucketName": {"Ref":"ConfigBucket"},
+        "SnsTopicARN": {"Ref":"NotificationTopic"}
+      }
+    },
+    "ConfigRecorder": {
+      "Type": "AWS::Config::ConfigurationRecorder",
+      "Properties": {
+        "Name": "default",
+        "RecordingGroup": {
+          "AllSupported": true,
+          "IncludeGlobalResourceTypes": true
+        },
+        "RoleARN": {"Fn::GetAtt" : ["ConfigIAMRole", "Arn"] }
+      }
+    },
+    "ConfigIAMRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "config.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSConfigRole","arn:aws:iam::aws:policy/AmazonEC2FullAccess","arn:aws:iam::aws:policy/AWSCloudTrailFullAccess"
+        ],
+        "RoleName": {
+          "Fn::Join": [
+            "",
+            [
+              "aws-config-role-",
+              {
+                "Ref": "AWS::Region"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "ConfigPolicy":{
+      "Type" : "AWS::IAM::Policy",
+      "DependsOn":"ConfigIAMRole",
+      "Properties" : {
+        "PolicyName" :{ "Fn::Join" : ["", ["aws-config-role-", {"Ref":"AWS::Region"},"_AWSConfigDeliveryPermissions_",{"Ref":"AWS::Region"}]]},
+        "PolicyDocument" : {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:PutObject*"
+              ],
+              "Resource": [
+                { "Fn::Join" : ["", ["arn:aws:s3:::", {"Ref":"ConfigBucket"}, "/AWSLogs/", {"Ref":"AWS::AccountId"}, "/*"]]}
+              ],
+              "Condition": {
+                "StringLike": {
+                  "s3:x-amz-acl": "bucket-owner-full-control"
+                }
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetBucketAcl"
+              ],
+              "Resource": { "Fn::Join" : ["", ["arn:aws:s3:::", {"Ref":"ConfigBucket"}]]}
+            },
+            {
+              "Effect": "Allow",
+              "Action": "sns:Publish",
+              "Resource": { "Fn::Join" : ["", ["arn:aws:sns:", {"Ref":"AWS::Region"},":",{"Ref":"AWS::AccountId"},":",{"Ref":"NotificationTopic"}]]}
+            }
+          ]
+        },
+        "Roles": [ { "Ref": "ConfigIAMRole" } ]
+      }
+    }
+  }
+}

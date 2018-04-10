@@ -1,0 +1,46 @@
+---
+# vars file for vpc
+aws_access_key:
+aws_secret_key:
+vpc_cidr_block: "10.0.0.0/16"
+vpc_env_name: "Test"
+vpc_name: "Genpact-{{ vpc_env_name }}"
+vpc_region: "ap-south-1"
+vpc_state: 
+vpc_purpose: "Ansible Testing Cloud"
+vpc_creator: "Ansible"
+vpc_environment: "Test"
+
+# default to a /24 block
+vpc_public_subnet_a_cidr_block: "10.0.1.0/24"
+vpc_private_NAT_subnet_a_cidr_block: "10.0.2.0/24"
+vpc_private_NO_NAT_subnet_a_cidr_block: "10.0.3.0/24"
+
+vpc_public_subnet_b_cidr_block: "10.0.4.0/24"
+vpc_private_NAT_subnet_b_cidr_block: "10.0.5.0/24"
+vpc_private_NO_NAT_subnet_b_cidr_block: "10.0.6.0/24"
+
+# parameters to delete vpc
+delete_vpc_state: 
+delete_vpc_id: vpc-08d13460
+delete_vpc_region: us-east-2
+skip_region:
+
+# parameters to delete default vpc
+#delete_default_vpc_state: "absent"
+
+regions:
+  - us-east-2
+  - us-east-1
+  - us-west-1
+  - us-west-2
+  - ap-south-1
+  - ap-northeast-2
+  - ap-southeast-1
+  - ap-southeast-2
+  - ap-northeast-1
+  - ca-central-1
+  - eu-central-1
+  - eu-west-1
+  - eu-west-2
+  - sa-east-1

@@ -1,0 +1,13 @@
+---
+# vars file for s3
+
+s3_bucket_name: "s3_bucket"
+aws_s3:
+  - bucket_name: "{{ s3_bucket_name }}"
+    state: "present"
+    region: "us-east-2"
+    versioning: "yes" # (yes to enable and no to disable)
+    logging_state: "present" # (present to enable and absent to disable)
+    target_log_bucket: "ansibles2testing1" # (The bucket to log to. Required when state=present)
+    target_prefix:  # (The prefix that should be prepended to the generated log files written to the target_bucket)
+    policy: "{{ lookup('template','s3_policy.json') }}"

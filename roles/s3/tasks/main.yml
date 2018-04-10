@@ -1,0 +1,49 @@
+---
+# tasks file for s3
+
+# - name: Create S3 bucket 
+#   aws_s3:
+#     bucket: "{{ item.bucket_name }}"
+#     mode: "{{ item.mode }}"
+#     region: "{{ item.region }}"
+#   with_items:
+#     - "{{ aws_s3 }}"
+#   when: item.mode == "create"
+
+- name: S3 bucket
+  s3_bucket:
+    name: "{{ item.bucket_name }}"
+    state: "{{ item.state }}"
+    region: "{{ item.region }}"
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    versioning: "{{ ((item.versioning == None) | ternary([], item.versioning)) }}"
+  with_items:
+    - "{{ aws_s3 }}"
+  when: item.policy is not defined
+
+- name: S3 bucket
+  s3_bucket:
+    name: "{{ item.bucket_name }}"
+    state: "{{ item.state }}"
+    region: "{{ item.region }}"
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    versioning: "{{ ((item.versioning == None) | ternary([], item.versioning)) }}"
+    policy: "{{ item.policy }}"
+  with_items:
+    - "{{ aws_s3 }}"
+  when: item.policy is defined
+
+- name: Enable logging of s3 bucket 
+  s3_logging:
+    name: "{{ item.bucket_name }}"
+    target_bucket: "{{ item.bucket_name }}"
+    target_prefix: "{{ ((item.target_prefix == None) | ternary([], item.target_prefix)) }}"
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    state: "{{ item.logging_state }}"
+    region: "{{ item.region }}"
+  with_items:
+    - "{{ aws_s3 }}"
+  when: item.logging_state is defined
