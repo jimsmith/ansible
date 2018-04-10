@@ -1,8 +1,0 @@
----
-# tasks file for bootstrap
-
-- name: Include variables for each OS
-  include_vars: "{{ ansible_distribution }}.yml"
-
-- name: Include playbook for each OS
-  include: "{{ ansible_distribution }}.yml"

@@ -1,8 +1,0 @@
----
-# tasks file for ec2
-
-- include: tasks/terminate.yml
-  when: state == "absent"
-
-- include: tasks/create.yml
-  when: state == "present"
