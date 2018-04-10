@@ -12,7 +12,6 @@ packages:
   - curl
   - chkconfig
   - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-  - libpwquality
   - wget
   # - ntp
   - net-snmp
