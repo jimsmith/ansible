@@ -1,0 +1,31 @@
+---
+# tasks file for cloudtrail
+
+- include_role: name=../roles/s3
+  vars:
+    bucket_name: "{{ s3_cloudtrail_bucket }}"
+    aws_s3:
+      - bucket_name: "{{ s3_cloudtrail_bucket }}"
+        state: "present"
+        region: "{{ region }}"
+        versioning: "{{ versioning }}" # (yes to enable and no to disable)
+        logging_state: "{{ logging }}" # (present to enable and absent to disable)
+        target_log_bucket: "{{ target_log_bucket_name }}" # (The bucket to log to. Required when state=present)
+        target_prefix: "{{ s3_key_prefix }}"
+        policy: "{{ lookup('template','cloudtrail_policy.json') }}"
+
+
+- name: create single region cloudtrail
+  cloudtrail:
+    state: present
+    name: "{{ cloudtrail_name }}"
+    s3_bucket_name: "{{ s3_cloudtrail_bucket }}"
+    s3_key_prefix: "{{ s3_key_prefix }}"
+    region: "{{ region }}"
+    is_multi_region_trail: "{{ multi_region_trial }}"
+    enable_log_file_validation: "{{ enable_log_file_validation }}"
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    # tags:
+    #   environment: test
+    #   Name: ansible

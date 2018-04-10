@@ -1,0 +1,15 @@
+---
+# tasks file for aws_config
+- set_fact: env_var="{{ lookup('env','WORKSPACE') }}"
+
+- name: launch vpc_flow_log cft template
+  cloudformation:
+    stack_name: "ansible-config"
+    state: "present"
+    region: "{{region}}"
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    disable_rollback: true
+    template: "{{ env_var }}/roles/aws_config/files/Config-with-Role.template.json"
+    tags:
+      Stack: "ansible-cloudformation-config"

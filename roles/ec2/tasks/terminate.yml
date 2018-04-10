@@ -1,0 +1,11 @@
+---
+- name: terminate instances
+  ec2:
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    instance_tags: "{{ aws_resource_tags | default(omit) }}"
+    instance_ids: "{{ instance_ids }}"
+    state: "{{ state | default('absent') }}"
+    region: "{{ region }}"
+  register: ec2
+  

@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  become: yes
+  roles:
+    - "../roles/iam_user"

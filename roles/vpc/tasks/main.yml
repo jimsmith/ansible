@@ -1,0 +1,10 @@
+---
+
+- include: "create_vpc.yml"
+  when: vpc_state == "present"
+
+- include: "delete_vpc.yml"
+  when: delete_vpc_state == "absent"
+
+- include: "delete_default_vpc.yml"
+  when: delete_default_vpc_state is defined
