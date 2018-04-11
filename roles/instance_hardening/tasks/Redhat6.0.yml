@@ -165,7 +165,10 @@
     - "sed -i '14 a password    sufficient    pam_unix.so sha512 shadow nullok try_first_pass use_authtok remember=24' /etc/pam.d/system-auth"
 
 - name: Reload sshd.service
-  systemd: state=restarted name=sshd enabled=yes 
+  service: 
+    state=restarted 
+    name=sshd 
+    enabled=yes 
 
 - name: Stop and disable firewalld service
   systemd: state=stopped name=firewalld enabled=no
@@ -212,7 +215,10 @@
 - shell: "awk -F: '($3 == 0) { print $1 }' /etc/passwd"
 
 - name: Restart chrony service
-  systemd: state=restarted name=chronyd enabled=yes 
+  service: 
+    state=restarted 
+    name=chronyd 
+    enabled=yes 
 
 # - name: Start ntpd service
 #   service:
@@ -315,7 +321,7 @@
 - shell: sudo systemctl daemon-reload
 
 - name: Restart auditd service
-  systemd:
+  service:
     name: auditd
     state: restarted
     enabled: yes
