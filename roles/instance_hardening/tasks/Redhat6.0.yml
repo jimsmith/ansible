@@ -314,23 +314,6 @@
 - shell: modprobe -r usb-storage
   ignore_errors: true
 
-- name: Update service manual access
-  replace:
-    path: /usr/lib/systemd/system/auditd.service
-    regexp: 'RefuseManualStop=yes'
-    replace: 'RefuseManualStop=no'
-    backup: yes
-
-- shell: sudo systemctl daemon-reload
-
-- name: Restart auditd service
-  service:
-    name: auditd
-    state: restarted
-    enabled: yes
-  become: yes
-
-- shell: auditctl -l > /var/tmp/audit_logs
 
 - name: Restarting rsyslog.service
   service: state=restarted name=rsyslog 
