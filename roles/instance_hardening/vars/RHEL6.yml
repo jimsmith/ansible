@@ -5,7 +5,7 @@ hostname: "GENPACTTESTLAB"
 ssh_key_path: "{{ lookup('file', '/var/lib/jenkins/sunteam.pub') }}"
 requester_user: "850033632"
 email_id: "devopsss@genpact.com"
-requester_pwd: "$1$/d340bZ5$olISAyKA3WRRSPHhZmzhk0"
+requester_pwd: "lISAyKA3WRRSPHhZmzhk0"
 pwd: test
 
 packages:
