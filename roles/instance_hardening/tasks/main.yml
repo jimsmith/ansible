@@ -11,6 +11,6 @@
 - name: Include playbook for each OS
   include: "{{ ansible_distribution }}.yml"
   
-- name: Include Windows playbook  
-  include: Windows.yml
-  when: ansible_os_family == "Windows"
+#- name: Include Windows playbook  
+#  include: Windows.yml
+#  when: ansible_os_family == "Windows"
