@@ -8,6 +8,11 @@
   lineinfile:
     path: /etc/hosts
     line: '127.0.0.1 {{ hostname }}'
+
+- name: remove ntp packages so that we can install chrony
+  yum:
+    name: ntp
+    state: removed
     
 - name: install dependency packages
   yum:

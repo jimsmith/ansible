@@ -19,7 +19,7 @@ packages:
   - net-snmp
   - audit
   - pam
-  # - chrony
+  - chrony
 
 delete_strings:
   - file: /etc/ssh/sshd_config
