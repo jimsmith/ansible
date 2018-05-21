@@ -40,7 +40,7 @@
       hostname: "{{ hostname }}"
       domain_admin_user: "{{ domain_admin }}"
       domain_admin_password: "{{ domain_admin_password }}"
-      domain_ou_path: "OU=Server_Hardening,OU=Gurgaon,DC=devcorp,DC=ad"
+#      domain_ou_path: "OU=Server_Hardening,OU=Gurgaon,DC=devcorp,DC=ad"
       state: domain
     register: domain_state
 
