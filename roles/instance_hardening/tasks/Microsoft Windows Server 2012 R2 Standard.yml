@@ -6,9 +6,9 @@
 - name: infrastructure setup
   hosts: windows
   gather_facts: no
-   vars:
- #   vpc_id: vpc-1566777c
-     region: "{{ aws_region }}"
+  vars:
+#   vpc_id: vpc-1566777c
+    region: "{{ aws_region }}"
 #  vars_files:
 #    - secret.yml
 
