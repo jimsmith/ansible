@@ -3,9 +3,9 @@
 # tasks file for windows
 #- name: infrastructure setup
 
-- hosts: windows
-  vars:
-    region: "{{ aws_region }}"
+  - hosts: windows
+    vars:
+      region: "{{ aws_region }}"
 #  gather_facts: false
 #  vars_files:
 #    - secret.yml
