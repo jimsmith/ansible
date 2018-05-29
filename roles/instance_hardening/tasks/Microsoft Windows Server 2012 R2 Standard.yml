@@ -1,8 +1,8 @@
 ---
 
 # tasks file for windows
-  
-  - vars: 
+  - host: windows  
+    vars: 
       region: "{{ aws_region }}"
 
 #- name: infrastructure setup
