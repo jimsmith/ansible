@@ -23,7 +23,8 @@ echo "$(Get-Date -format T) - Installer Exit Code:" (Start-Process -FilePath msi
 echo "$(Get-Date -format T) - DSA activation started"
 Start-Sleep -s 50
 & $Env:ProgramFiles"\Trend Micro\Deep Security Agent\dsa_control" -r
-& $Env:ProgramFiles"\Trend Micro\Deep Security Agent\dsa_control" -a dsm://hb.genpact.com:443/ "policyid:22"
+& $Env:ProgramFiles"\Trend Micro\Deep Security Agent\dsa_control" -a dsm://hb.genpact.com:443/ "policyid:33"
 Stop-Transcript
 echo "$(Get-Date -format T) - DSA Deployment Finished"
-</powershell>
+</powershell> 
+

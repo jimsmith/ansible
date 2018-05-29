@@ -1,5 +1,6 @@
 <powershell>
 #requires -version 4.0
+# Genpact-EU (Ireland) version
 # This script detects platform and architecture, download and install matching Deep Security Agent 10 package
 [Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 $env:LogPath = "$env:appdata\Trend Micro\Deep Security Agent\installer"
@@ -23,11 +24,8 @@ echo "$(Get-Date -format T) - Installer Exit Code:" (Start-Process -FilePath msi
 echo "$(Get-Date -format T) - DSA activation started"
 Start-Sleep -s 50
 & $Env:ProgramFiles"\Trend Micro\Deep Security Agent\dsa_control" -r
-& $Env:ProgramFiles"\Trend Micro\Deep Security Agent\dsa_control" -x dsm_proxy://119.43.207.11:3120/
-& $Env:ProgramFiles"\Trend Micro\Deep Security Agent\dsa_control" -u null
-& $Env:ProgramFiles"\Trend Micro\Deep Security Agent\dsa_control" -y relay_proxy://119.43.207.11:3120/
-& $Env:ProgramFiles"\Trend Micro\Deep Security Agent\dsa_control" -w null
-& $Env:ProgramFiles"\Trend Micro\Deep Security Agent\dsa_control" -a dsm://hb.genpact.com:443/ "policyid:62"
+& $Env:ProgramFiles"\Trend Micro\Deep Security Agent\dsa_control" -a dsm://hb.genpact.com:443/ "policyid:42"
 Stop-Transcript
 echo "$(Get-Date -format T) - DSA Deployment Finished"
-</powershell>
+</powershell> 
+
