@@ -13,7 +13,7 @@
   #   region: us-east-2
 #  vars_files:
 #    - secret.yml
-   tasks:
+  tasks:
 #  - name: Copy hardening script
 #    win_copy:
 #      src: files/TM-DSM-EU.ps1
