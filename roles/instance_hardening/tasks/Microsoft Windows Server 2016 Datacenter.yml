@@ -2,8 +2,8 @@
 
 # tasks file for windows
 
-  - vars: 
-      region: "{{ aws_region }}"
+#  - vars: 
+#      region: "{{ aws_region }}"
 
 #- name: infrastructure setup
 #  hosts: win
@@ -13,7 +13,7 @@
   #   region: us-east-2
 #  vars_files:
 #    - secret.yml
-
+   tasks:
 #  - name: Copy hardening script
 #    win_copy:
 #      src: files/TM-DSM-EU.ps1
