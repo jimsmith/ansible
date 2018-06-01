@@ -1,19 +1,10 @@
 ---
-
-# tasks file for windows
-
-#  - vars: 
-#      region: "{{ aws_region }}"
-
 - name: infrastructure setup
   hosts: windows
-
-#  gather_facts: no
+  gather_facts: false
   # vars:
   #   vpc_id: vpc-1566777c
   #   region: us-east-2
-#  vars_files:
-#    - secret.yml
   tasks:
     - name: Stop IP Helper service
       win_service:
