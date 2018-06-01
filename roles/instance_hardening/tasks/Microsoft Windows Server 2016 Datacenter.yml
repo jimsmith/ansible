@@ -5,8 +5,9 @@
 #  - vars: 
 #      region: "{{ aws_region }}"
 
-#- name: infrastructure setup
-#  hosts: win
+- name: infrastructure setup
+  hosts: windows
+
 #  gather_facts: no
   # vars:
   #   vpc_id: vpc-1566777c
@@ -14,6 +15,50 @@
 #  vars_files:
 #    - secret.yml
   tasks:
+    - name: Stop IP Helper service
+      win_service:
+        name: iphlpsvc
+        state: stopped
+        start_mode: disabled
+
+    - name: Set off firewall service
+      win_service:
+        name: MpsSvc
+        state: started
+
+    - name: Start computer browser service
+      win_service:
+        name: Browser
+        state: started
+        start_mode: auto
+
+    - name: Ensure user Guest is disabled
+      win_user:
+        name: Guest
+        account_disabled: yes
+        state: absent
+
+    - name: Ensure New administrator is created
+      win_user:
+        name: 900026557
+        password: PolesP4ssw0rd
+        state: present
+        password_never_expires: yes
+        description: Poles team account for administering the computer/domain
+        groups:
+          - Administrators
+
+    - name: Ensure administrator to remove from Administrators group.
+      win_user:
+        name: Administrator
+        password: dummYadMin@987
+        state: present
+        password_never_expires: yes
+        description: Built-in account for administering the computer/domain
+        groups:
+          - Users
+        groups_action: replace
+
 #  - name: Copy hardening script
 #    win_copy:
 #      src: files/TM-DSM-EU.ps1
@@ -80,55 +125,6 @@
 #      - Public
 #    tags: disable_firewall
 
-  - name: Stop IP Helper service
-    win_service:
-      name: iphlpsvc
-      state: stopped
-      start_mode: disabled
-
-  - name: Set off firewall service
-    win_service:
-      name: MpsSvc
-      state: started
-
-  - name: Start computer browser service
-    win_service:
-      name: Browser
-      state: started
-      start_mode: auto
-
-  - name: Ensure user Guest is disabled
-    win_user:
-      name: Guest
-      account_disabled: yes
-      state: absent
-
-  - name: Ensure New administrator is created
-    win_user:
-      name: 900026557
-      password: PolesP4ssw0rd
-      state: present
-      password_never_expires: yes
-      description: Poles team account for administering the computer/domain
-      groups:
-        - Administrators
-
-  - name: Ensure administrator to remove from Administrators group.
-    win_user:
-      name: Administrator
-      password: dummYadMin@987
-      state: present
-      password_never_expires: yes
-      description: Built-in account for administering the computer/domain
-      groups:
-        - Users
-      groups_action: replace
-      
-
-#       
-#
-#
-#        
 
 #  - name: Install Remote Desktop Connection Manager from msi
 #    win_package:
