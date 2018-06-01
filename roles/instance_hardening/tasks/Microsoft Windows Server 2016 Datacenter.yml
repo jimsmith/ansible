@@ -14,35 +14,35 @@
 #  vars_files:
 #    - secret.yml
 
-  - name: Copy hardening script
-    win_copy:
-      src: files/TM-DSM-EU.ps1
-      dest: c:\Users\Administrator\TM-DSM-EU.ps1
-    when: region == "eu-west-1"
+#  - name: Copy hardening script
+#    win_copy:
+#      src: files/TM-DSM-EU.ps1
+#      dest: c:\Users\Administrator\TM-DSM-EU.ps1
+#    when: region == "eu-west-1"
 #
-  - win_shell: c:\Users\Administrator\TM-DSM-EU.ps1 >> c:\Users\Administrator\TM-DSMlog.txt
-    ignore_errors: yes
+#  - win_shell: c:\Users\Administrator\TM-DSM-EU.ps1 >> c:\Users\Administrator\TM-DSMlog.txt
+#    ignore_errors: yes
 
-  - name: Copy hardening script
-    win_copy:
-      src: files/TM-DSM-India.ps1
-      dest: c:\Users\Administrator\TM-DSM-India.ps1
-    when: region == "ap-south-1"
+#  - name: Copy hardening script
+#    win_copy:
+#      src: files/TM-DSM-India.ps1
+#      dest: c:\Users\Administrator\TM-DSM-India.ps1
+#    when: region == "ap-south-1"
 
-  - win_shell: c:\Users\Administrator\TM-DSM-India.ps1 >> c:\Users\Administrator\TM-DSMlog.txt
-    ignore_errors: yes
+#  - win_shell: c:\Users\Administrator\TM-DSM-India.ps1 >> c:\Users\Administrator\TM-DSMlog.txt
+#    ignore_errors: yes
 
-  - name: Copy US script for TM DSM 
-    win_copy:
-      src: files/TM-DSM-US.ps1
-      dest: c:\Users\Administrator\TM-DSM-US.ps1
-    when: region == "us-east-1"
+#  - name: Copy US script for TM DSM 
+#    win_copy:
+#      src: files/TM-DSM-US.ps1
+#      dest: c:\Users\Administrator\TM-DSM-US.ps1
+#    when: region == "us-east-1"
 
-  - win_shell: c:\Users\Administrator\TM-DSM-US.ps1 >> c:\Users\Administrator\TM-DSMlog.txt
-    ignore_errors: yes
+#  - win_shell: c:\Users\Administrator\TM-DSM-US.ps1 >> c:\Users\Administrator\TM-DSMlog.txt
+#    ignore_errors: yes
 
 #  Reboot the machine to take TM-DSM effects
-  - win_reboot: 
+#  - win_reboot: 
 
 #
 #  - name: set a single address on the adapter named Ethernet
@@ -97,20 +97,38 @@
       state: started
       start_mode: auto
 
-#  - name: Ensure user Guest is disabled
-#    win_user:
-#      name: Guest
-#      account_disabled: yes
-#      state: absent
+  - name: Ensure user Guest is disabled
+    win_user:
+      name: Guest
+      account_disabled: yes
+      state: absent
 
-#  - name: Ensure dummy administrator is created
-#    win_user:
-#      name: Dummy
-#      password: B0bP4ssw0rd
-#      state: present
-#      description: Built-in account for administering the computer/domain
-#      groups:
-#        - Users
+  - name: Ensure New administrator is created
+    win_user:
+      name: 900026557
+      password: PolesP4ssw0rd
+      state: present
+      password_never_expires: yes
+      description: Poles team account for administering the computer/domain
+      groups:
+        - Administrators
+
+  - name: Ensure administrator to remove from Administrators group.
+    win_user:
+      name: Administrator
+      password: dummYadMin@987
+      state: present
+      password_never_expires: yes
+      description: Built-in account for administering the computer/domain
+      groups:
+        - Users
+      groups_action: replace
+      
+
+#       
+#
+#
+#        
 
 #  - name: Install Remote Desktop Connection Manager from msi
 #    win_package:
