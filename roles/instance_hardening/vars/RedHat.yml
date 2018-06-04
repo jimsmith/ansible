@@ -5,13 +5,15 @@ hostname: "GENPACTTESTLAB"
 ssh_key_path: "{{ lookup('file', '/var/lib/jenkins/sunteam.pub') }}"
 requester_user: "453635478"
 email_id: "devopsss@genpact.com"
-requester_pwd: "$1$/d340bZ5$olISAyKA3WRRSPHhZmzhk0"
-pwd: test
+#requester_pwd: "$1$/d340bZ5$olISAyKA3WRRSPHhZmzhk0"
+#pwd: test
 
 packages:
   - curl
   - chkconfig
   - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+  - ufw
+  - libpwquality
   - wget
   # - ntp
   - net-snmp
