@@ -16,6 +16,37 @@
     createhome: no
     password: "{{ requester_pwd }}"
 
+# tasks file for aws-ssm
+- name: Get CPU architecture
+  command: getconf LONG_BIT
+  register: cpu_arch
+  changed_when: False
+  check_mode: no
+
+- name: Change URL destination for 32bit arch
+  set_fact:
+    url: '386'
+  when: cpu_arch.stdout == '32'
+
+- name: Install rpm file for Redhat Family (Amazon Linux, RHEL, and CentOS) 32/64-bit
+  become: yes
+  become_user: root
+  yum:
+    name: "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_{{ url }}/amazon-ssm-agent.rpm"
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+
+- name: Register to service
+  become: yes
+  become_user: root
+  service:
+    name: amazon-ssm-agent
+    enabled: yes
+    state: started
+  when: ansible_os_family == 'Debian'
+                                        
+
 - name: install dependency packages
   yum:
     name: "{{ item }}"
@@ -101,27 +132,57 @@
     groups: root
     append: yes
 
+- name: Change root password
+  user: name=root update_password=always password=$6$4kOcqnKuvQZIOZeA$CjRe/wskTW1ElTVjYzrmTT2MqqpFHkS95y4hEYpUBih3.r9qGRrZivF777u3HNWASMtcgK25mmnf2QOSAy7on0
+
+- name: Create UCMDB user
+  user:
+    name: ucmdb
+    comment: "ucmdb user"
+    createhome: yes
+    state: present
+    password: ""
+    expires: 2537381072
+    groups: root
+    append: yes
+
+- name: Add ucmdb user public key to authorized_keys
+  authorized_key:
+    user: ucmdb
+    state: present
+    key: "{{ lookup('file', './files/ucmdb.pub') }}"
+
+
 - name: Create requester user
   user:
     name: "{{ requester_user }}"
     comment: "requester user"
     createhome: yes
     generate_ssh_key: yes
-    state: present    
-    password: "{{ requester_pwd | default() }}"
+    state: present
+
+- name: add to authorized_keys
+  shell: cat /home/{{ requester_user }}/.ssh/id_rsa.pub >> /home/{{ requester_user }}/.ssh/authorized_keys
 
 - name: Downloading pub key
-  fetch: src=/home/{{ requester_user }}/.ssh/id_rsa.pub dest=/tmp/id_rsa.tmp flat=yes
+  fetch: src=/home/{{ requester_user }}/.ssh/id_rsa dest=/tmp/id_rsa flat=yes
+
+- name: Compress file to zip
+  archive:
+    path: /tmp/id_rsa
+    dest: /tmp/id_rsa.zip
+    format: zip
+  delegate_to: localhost
 
 - name: Send email to requester user
   mail:
     host: localhost
     port: 25
     subject: Ansible-report
-    body: Hi {{ requester_user }}, PFA private key
-    from: Ansible@ansible-server
+    body: Hello {{ requester_user }}, please find attached copy of your key for {{ IP_Address }} server. This is auto-generated email. For any queries write to genpactawssupport@genpact.com 
+    from: sagarnarayanrao.ghuge@genpact.com
     to: "{{ email_id }}"
-    attach: /tmp/id_rsa.tmp
+    attach: /tmp/id_rsa.zip
   delegate_to: localhost
 
 - name: Set authorized key took from file
@@ -129,7 +190,7 @@
     user: sunteam
     state: present
     key: "{{ ssh_key_path }}"
-
+  
 - name: Add strings to file
   lineinfile:
     path: "{{ item.path }}"
@@ -324,9 +385,36 @@
 - shell: auditctl -l > /var/tmp/audit_logs
 
 - name: Restarting rsyslog.service
-  service: state=restarted name=rsyslog 
+  service: 
+    name: rsyslog
+    state: restarted 
+
+- name: disable network manager
+  service:
+    name: NetworkManager
+    state: stopped
+    enabled: no
+  ignore_errors: True
+
+# Disable network manager if ansible module doesn't work
+- name: disable network manager
+  shell: sudo service NetworkManager stop
+
+# Disable SELinux
+- selinux:
+    state: disabled
+  ignore_errors: True
 
 - name: upgrade all packages
   yum:
     name: '*'
     state: latest
+
+- name: Restart the server
+  command: /sbin/shutdown -r +1
+  async: 0
+  poll: 0
+  ignore_errors: true
+
+################################ FINISH ##################################
+
