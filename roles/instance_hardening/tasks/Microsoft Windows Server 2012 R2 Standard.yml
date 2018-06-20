@@ -1,0 +1,239 @@
+---
+
+- name: Save the result of 'whoami' in 'whoami_out'
+  win_command: whoami
+  register: whoami_out
+
+- name: Enable windows automatic updates
+  win_shell: reg add HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU /v AUOptions /t REG_DWORD /d 3
+
+- name: Install Windows updates
+  win_updates:
+    log_path: c:\Windows_update_log.txt
+    category_names:
+      - SecurityUpdates
+      - CriticalUpdates
+      - UpdateRollups
+      - Updates
+      - Application
+      - ServicePacks
+      - FeaturePacks
+      - Guidance
+      - Tools
+  register: update_result
+  failed_when: 'update_result.failed_update_count is defined and update_result.failed_update_count == update_result.found_update_count'
+  when: "(update_result is not defined) or (update_result.found_update_count is defined and update_result.found_update_count > 0)"
+
+- name: Create directory structure
+  win_file:
+    path: C:\BootStrap
+    state: directory
+
+# Misc
+- name: Stop IP Helper service
+  win_service:
+    name: iphlpsvc
+    state: stopped
+    start_mode: disabled
+
+- name: Set off firewall service
+  win_service:
+    name: MpsSvc
+    state: stopped
+
+- name: Start computer browser service
+  win_service:
+    name: Browser
+    state: started
+    start_mode: auto
+
+- name: Take complete memory dump of server
+  win_shell: wmic recoveros set DebugInfoType = 1
+
+- name: Disable automatic restart of the server on failure
+  win_shell: wmic RecoverOS set AutoReboot = False
+
+
+#- name: Ensure administrator to remove from Administrators group.
+#  win_user:
+#    name: Administrator
+#    password: dummYadMin@987
+#    state: present
+#    password_never_expires: yes
+#    description: Built-in account for administering the computer/domain
+#    groups:
+#      - Users
+#    groups_action: replace
+
+- name: Configure System Event Log (Security) | windows-audit-101
+  win_regedit:
+    path: HKLM:\Software\Policies\Microsoft\Windows\EventLog\Security
+    name: "MaxSize"
+    data: "1"
+    type: dword
+
+
+- name: Disable Windows Store - Ensure Turn off Automatic Download and Install of updates is set to Disabled
+  win_regedit:
+    key: HKLM:\Software\Policies\Microsoft\WindowsStore
+    value: "{{ item.v }}"
+    data: "{{ item.d }}"
+    datatype: dword
+  with_items:
+    - { v: 'AutoDownload', d: 4 }
+    - { v: 'DisableOSUpgrade', d: 1 }
+
+
+- name: Disable indexing encrypted files
+  win_regedit:
+    key: HKLM:\Software\Policies\Microsoft\Windows\Windows Search
+    value: AllowIndexingEncryptedStoresOrItems
+    data: 0
+    datatype: dword
+
+- name: Disable Non-native IPv6 (Tunnels)
+  win_regedit:
+    #path: HKLM:\SYSTEM\CurrenSelect region of newly provisioned Windows servertControlSet\Services\Tcpip6\Parameters
+    key: HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters
+    name: DisabledComponents
+    data: 14
+    type: dword
+
+#- name: Ensure user Guest is disabled
+#  win_user:
+#    name: Guest
+#    account_disabled: yes
+#    state: absent
+
+- name: Disable Guest account using powershell command
+  win_shell: net user guest /active:no
+
+
+- name: Ensure New administrator is created
+  win_user:
+    name: 900026557
+    password: PolesP4ssw0rd
+    state: present
+    password_never_expires: yes
+    description: Poles team account for administering the computer/domain
+    groups:
+      - Administrators
+
+
+# Install TM-DSM
+- name: Fetch instance metadata
+  win_shell: Invoke-RestMethod -uri http://169.254.169.254/latest/meta-data/placement/availability-zone/
+  register: region
+
+- set_fact: reg="us-east-1"
+  when: '"us" in region.stdout'
+
+- set_fact: reg="eu-west-1"
+  when: '"eu" in region.stdout'
+
+- set_fact: reg="ap-south-1"
+  when: '"ap" in region.stdout'
+                                 
+
+- name: Copy TM-DSM script
+  win_copy:
+    src: files/TM-DSM-EU.ps1
+    dest: c:\Users\Administrator\TM-DSM-EU.ps1
+  when: reg == "eu-west-1"
+
+- win_shell: c:\Users\Administrator\TM-DSM-EU.ps1 >> c:\Users\Administrator\TM-DSMlog.txt
+  ignore_errors: yes
+
+- name: Copy hardening script
+  win_copy:
+    src: files/TM-DSM-India.ps1
+    dest: c:\Users\Administrator\TM-DSM-India.ps1
+  when: reg == "ap-south-1"
+
+- win_shell: c:\Users\Administrator\TM-DSM-India.ps1 >> c:\Users\Administrator\TM-DSMlog.txt
+  ignore_errors: yes
+
+- name: Copy US script for TM DSM
+  win_copy:
+    src: files/TM-DSM-US.ps1
+    dest: c:\Users\Administrator\TM-DSM-US.ps1
+  when: reg == "us-east-1"
+
+- win_shell: c:\Users\Administrator\TM-DSM-US.ps1 >> c:\Users\Administrator\TM-DSMlog.txt
+  ignore_errors: yes
+
+#  Reboot the machine to take TM-DSM effects
+- win_reboot:
+
+
+######################################  JOIN TO AD  ###############################################
+#  - name: set a single address on the adapter named Ethernet
+#    win_dns_client:
+#      adapter_names: "*"
+#      ipv4_addresses: "{{ AD_dns_address }}"
+
+#  - name: Join domain
+#    win_domain_membership:
+#      dns_domain_name: "{{ AD_domain_name }}"
+#      hostname: "{{ hostname }}"
+#      domain_admin_user: "{{ domain_admin }}"
+#      domain_admin_password: "{{ domain_admin_password }}"
+#      domain_ou_path: "OU=Server_Hardening,OU=Gurgaon,DC=devcorp,DC=ad"
+#      state: domain
+#    register: domain_state
+
+#  - win_reboot:
+#    when: domain_state.reboot_required
+
+# QRadar installation
+- name: Copy wincollect script to remote server
+  win_copy:
+    src: files/wincollect.ps1
+    dest: C:\Users\Administrator\
+
+- name: Copy wincollect package to remote server
+  win_copy:
+    src: files/wincollect-7.2.5-27.x64.exe
+    dest: C:\Users\Administrator\
+
+- name: Run wincollect script
+  win_shell: C:\Users\Administrator\wincollect.ps1 >> C:\Users\Administrator\wincollect_log.txt
+  ignore_errors: yes
+
+
+# Tenable Installation Initiated
+- name: Copy Nessus agent
+  win_copy:
+    src: files/NessusAgent-7.0.3-x64.msi
+    dest:  C:\Users\Administrator\
+
+- name: Copy Nessus key
+  win_copy:
+    src: files/Nessuskey.cmd
+    dest: C:\Users\Administrator\Nessuskey.cmd
+
+- name: Add nessus key
+  win_command: C:\Users\Administrator\Nessuskey.cmd >> C:\Users\Administrator\Nessuskey_log.txt
+
+
+- name: Disable Domain firewall
+  win_firewall:
+    state: disabled
+    profiles:
+    - Private
+    - Public
+  tags: disable_firewall
+  ignore_errors: yes
+
+- name: Disable windows automatic updates
+  win_shell: reg add HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\WindowsUpdate\AU /v NoAutoUpdate  /t REG_DWORD /d 1
+
+
+- name: Disable Administrator account
+  win_user:
+    name: Administrator
+    account_disabled: yes
+    state: present
+  ignore_errors: yes
+
+######################################################  END  ##################################################
