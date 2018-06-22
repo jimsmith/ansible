@@ -162,42 +162,39 @@
 - win_shell: c:\Users\Administrator\TM-DSM-US.ps1 >> c:\Users\Administrator\TM-DSMlog.txt
   ignore_errors: yes
 
-#  Reboot the machine to take TM-DSM effects
-- win_reboot:
-
 
 ######################################  JOIN TO AD  ###############################################
-#  - name: set a single address on the adapter named Ethernet
-#    win_dns_client:
-#      adapter_names: "*"
-#      ipv4_addresses: "{{ AD_dns_address }}"
+- name: set a single address on the adapter named Ethernet
+  win_dns_client:
+    adapter_names: "*"
+    ipv4_addresses: "{{ AD_dns_address }}"
 
-#  - name: Join domain
-#    win_domain_membership:
-#      dns_domain_name: "{{ AD_domain_name }}"
-#      hostname: "{{ hostname }}"
-#      domain_admin_user: "{{ domain_admin }}"
-#      domain_admin_password: "{{ domain_admin_password }}"
-#      domain_ou_path: "OU=Server_Hardening,OU=Gurgaon,DC=devcorp,DC=ad"
-#      state: domain
-#    register: domain_state
+- name: Join domain
+  win_domain_membership:
+    dns_domain_name: "{{ AD_domain_name }}"
+    hostname: "{{ hostname }}"
+    domain_admin_user: "{{ domain_admin }}"
+    domain_admin_password: "{{ domain_admin_password }}"
+#    domain_ou_path: "OU=Server_Hardening,OU=Gurgaon,DC=devcorp,DC=ad"
+    state: domain
+  register: domain_state
 
-#  - win_reboot:
-#    when: domain_state.reboot_required
+- win_reboot:
+  when: domain_state.reboot_required
 
 # QRadar installation
 - name: Copy wincollect script to remote server
   win_copy:
     src: files/wincollect.ps1
-    dest: C:\Users\Administrator\
+    dest: C:\
 
 - name: Copy wincollect package to remote server
   win_copy:
     src: files/wincollect-7.2.5-27.x64.exe
-    dest: C:\Users\Administrator\
+    dest: C:\
 
 - name: Run wincollect script
-  win_shell: C:\Users\Administrator\wincollect.ps1 >> C:\Users\Administrator\wincollect_log.txt
+  win_shell: C:\wincollect.ps1 >> C:\wincollect_log.txt
   ignore_errors: yes
 
 
@@ -205,15 +202,15 @@
 - name: Copy Nessus agent
   win_copy:
     src: files/NessusAgent-7.0.3-x64.msi
-    dest:  C:\Users\Administrator\
+    dest:  C:\
 
 - name: Copy Nessus key
   win_copy:
     src: files/Nessuskey.cmd
-    dest: C:\Users\Administrator\Nessuskey.cmd
+    dest: C:\Nessuskey.cmd
 
 - name: Add nessus key
-  win_command: C:\Users\Administrator\Nessuskey.cmd >> C:\Users\Administrator\Nessuskey_log.txt
+  win_command: C:\Nessuskey.cmd >> C:\Nessuskey_log.txt
 
 
 - name: Disable Domain firewall
@@ -229,11 +226,13 @@
   win_shell: reg add HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\WindowsUpdate\AU /v NoAutoUpdate  /t REG_DWORD /d 1
 
 
-- name: Disable Administrator account
-  win_user:
-    name: Administrator
-    account_disabled: yes
-    state: present
-  ignore_errors: yes
+- win_reboot:
+
+#- name: Disable Administrator account
+#  win_user:
+#    name: Administrator
+#    account_disabled: yes
+#    state: present
+#  ignore_errors: yes
 
 ######################################################  END  ##################################################
