@@ -8,6 +8,9 @@ email_id: "devopsss@genpact.com"
 #requester_pwd: "$1$/d340bZ5$olISAyKA3WRRSPHhZmzhk0"
 #pwd: test
 
+# defaults file for aws-ssm
+url: 'amd64'
+
 packages:
   - curl
   - sysv-rc-conf

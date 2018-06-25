@@ -3,10 +3,13 @@
 
 hostname: "GENPACTTESTLAB"
 ssh_key_path: "{{ lookup('file', '/var/lib/jenkins/sunteam.pub') }}"
-requester_user: "453635478"
-email_id: "devopsss@genpact.com"
+#requester_user: "453635478"
+#email_id: "devopsss@genpact.com"
 #requester_pwd: "$1$/d340bZ5$olISAyKA3WRRSPHhZmzhk0"
 #pwd: test
+
+# defaults file for aws-ssm
+url: 'amd64'
 
 packages:
   - curl
@@ -36,6 +39,18 @@ delete_strings:
     regexp: '^PASS_MAX_DAYS'
   - file: /etc/login.defs
     regexp: '^PASS_MIN_DAYS'
+  - file: /etc/login.defs
+    regexp: '^PASS_MIN_LEN'
+  - file: /etc/login.defs
+    regexp: '^PASS_WARN_AGE'
+  - file: /etc/login.defs
+    regexp: '^PASS_MAX_LEN'
+  - file: /etc/login.defs
+    regexp: '^LOGIN_RETRIES'
+  - file: /etc/login.defs
+    regexp: '^LOGIN_TIMEOUT'
+  - file: /etc/login.defs
+    regexp: '^PASS_CHANGE_TRIES'
   - file: /etc/pam.d/system-auth
     regexp: '^pam_cracklib.so'
   - file: /etc/pam.d/system-auth
@@ -58,8 +73,6 @@ add_strings:
     line: 'PermitRootLogin no'
   - path: /etc/ssh/sshd_config
     line: 'ChallengeResponseAuthentication yes'
-  - path: /etc/ssh/sshd_config
-    line: 'PasswordAuthentication yes'
   - path: /etc/login.defs
     line: "PASS_MAX_DAYS  90"
   - path: /etc/login.defs
@@ -68,6 +81,16 @@ add_strings:
     line: "LOGIN_RETRIES     3"
   - path: /etc/login.defs
     line: "LOGIN_TIMEOUT     60"
+  - path: /etc/login.defs
+    line: "PASS_MIN_LEN  8"
+  - path: /etc/login.defs
+    line: "PASS_MAX_LEN  8 *np"
+  - path: /etc/login.defs
+    line: "PASS_WARN_AGE  80"
+  - path: /etc/login.defs
+    line: "PASS_CHANGE_TRIES  5 *np"
+  - path: /etc/ssh/sshd_config
+    line: 'PasswordAuthentication yes'
   - path: /etc/securetty
     line: "tty1"
   - path: /etc/chrony.conf
@@ -107,6 +130,7 @@ block_msg:
         | evidence of criminal activity, system personnel may provide the |
         | evidence of such monitoring to law enforcement officials.       |
         |-----------------------------------------------------------------|
+
   - msg_path: /etc/issue
     block: |
         |-----------------------------------------------------------------|
@@ -126,3 +150,4 @@ block_msg:
         | evidence of criminal activity, system personnel may provide the |
         | evidence of such monitoring to law enforcement officials.       |
         |-----------------------------------------------------------------|
+
