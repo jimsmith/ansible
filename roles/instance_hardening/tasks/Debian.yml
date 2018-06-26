@@ -1,4 +1,16 @@
 ---
+- gather_facts: no
+
+- name: Refresh apt cache
+  become: no
+  local_action: shell ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=5 {{ inventory_hostname }} sudo apt-get update
+
+- name: install python2
+  raw: sudo apt-get -y install python-simplejson
+       
+- name: Install Python-apt to pull in Python
+  become: no
+  local_action: shell ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=5 {{ inventory_hostname }} sudo apt-get install --no-install-recommends --assume-yes python-apt
 
 - name: Add hostname
   hostname:
@@ -9,16 +21,51 @@
     path: /etc/hosts
     line: '127.0.0.1 {{ hostname }}'
 
+# tasks file for aws-ssm
+- name: Get CPU architecture
+  command: getconf LONG_BIT
+  register: cpu_arch
+  changed_when: False
+  check_mode: no
+
+- name: Change URL destination for 32bit arch
+  set_fact:
+    url: '386'
+  when: cpu_arch.stdout == '32'
+
+- name: Install rpm file for Redhat Family (Amazon Linux, RHEL, and CentOS) 32/64-bit
+  become: yes
+  become_user: root
+  yum:
+    name: "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_{{ url }}/amazon-ssm-agent.rpm"
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Install deb file for Debian family 32/64-bit
+  become: yes
+  become_user: root
+  apt:
+    deb: "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_{{ url }}/amazon-ssm-agent.deb"
+  when: ansible_os_family == 'Debian'
+
+- name: Register to service
+  become: yes
+  become_user: root
+  service:
+    name: amazon-ssm-agent
+    enabled: yes
+    state: started
+  when: ansible_os_family == 'Debian'
+
+    
 - name: install dependency packages
   apt:
     name: "{{ item }}"
-    state: latest
-    upgrade: yes
-    update_cache: yes
+    state: latest   
   with_items:
     - "{{ packages }}"
 
-- name: Download package file 
+- name: Download package file for TM-DSM agent
   get_url:
     url: https://dsm.genpact.com:443/software/deploymentscript/platform/linux/
     dest: /tmp/DownloadInstallAgentPackage
@@ -45,6 +92,34 @@
     owner: ubuntu
     group: ubuntu
 
+# Install Tenable
+- name: Download my_package
+  get_url: 
+    url: https://s3.ap-south-1.amazonaws.com/genpact-ansible/NessusAgent-7.1.0-debian6_amd64.deb
+    dest: /tmp/NessusAgent-7.1.0-debian6_amd64.deb
+
+- name: Install my_package
+  apt: deb="/tmp/NessusAgent-7.1.0-debian6_amd64.deb"
+  sudo: true
+
+- name: Check agent link status
+  command: /opt/nessus_agent/sbin/nessuscli agent status
+  become: yes
+  ignore_errors: yes
+  register: nessus_link
+
+- name: Configure Nessus Agent
+  command: sudo /opt/nessus_agent/sbin/nessuscli agent link --key=9d4777f71733214d2a35566bd5f4bee3fda2b19462083c5f692dc86a2306d771 --host=cloud.tenable.com --port=443 --groups="ThirdPillar_AWS" --name="AWSCLI"    
+  become: yes
+  when: nessus_link|failed
+
+- name: Ensure nessusagent is started
+  service:
+    name: nessusagent
+    state: started
+    enabled: yes
+
+# # Install TM-DSM
 - name: Download Install Agent Package
   shell: . DownloadInstallAgentPackage && Download_Install_Agent
   args:
@@ -57,8 +132,7 @@
 - name: Reset agent
   shell: /opt/ds_agent/dsa_control -r
 
-- name: Fetch aws region
-  shell: curl http://169.254.169.254/latest/meta-data/placement/availability-zone/
+- shell: curl http://169.254.169.254/latest/meta-data/placement/availability-zone/
   register: region
 
 - set_fact: var="policyid:23"
@@ -96,6 +170,26 @@
     groups: root
     append: yes
 
+#- name: Change root password
+#  user: name=root update_password=always password=$6$4kOcqnKuvQZIOZeA$CjRe/wskTW1ElTVjYzrmTT2MqqpFHkS95y4hEYpUBih3.r9qGRrZivF777u3HNWASMtcgK25mmnf2QOSAy7on0
+
+- name: Create UCMDB user
+  user:
+    name: ucmdb
+    comment: "ucmdb user"
+    createhome: yes
+    state: present
+    password: ""
+    expires: 2537381072
+    groups: root
+    append: yes
+
+- name: Add ucmdb user public key to authorized_keys
+  authorized_key:
+    user: ucmdb
+    state: present
+    key: "{{ lookup('file', './files/ucmdb.pub') }}"
+
 - name: Create requester user
   user:
     name: "{{ requester_user }}"
@@ -103,22 +197,31 @@
     createhome: yes
     generate_ssh_key: yes
     state: present    
-    password: "{{ requester_pwd | default() }}"
+
+- name: add to authorized_keys
+  shell: cat /home/{{ requester_user }}/.ssh/id_rsa.pub >> /home/{{ requester_user }}/.ssh/authorized_keys
 
 - name: Downloading pub key
-  fetch: src=/home/{{ requester_user }}/.ssh/id_rsa.pub dest=/tmp/id_rsa.tmp flat=yes
+  fetch: src=/home/{{ requester_user }}/.ssh/id_rsa dest=/var/lib/jenkins/id_rsa flat=yes
+
+- name: Compress file to zip
+  archive:
+    path: /var/lib/jenkins/id_rsa
+    dest: /var/lib/jenkins/id_rsa.zip
+    format: zip
+  delegate_to: localhost
 
 - name: Send email to requester user
   mail:
     host: localhost
     port: 25
     subject: Ansible-report
-    body: Hi {{ requester_user }}, PFA private key
-    from: Ansible@ansible-server
+    body: Hello {{ requester_user }}, please find attached copy of your key for {{ IP_Address }} server. This is auto-generated email. For any queries write to genpactawssupport@genpact.com
+    from: sagarnarayanrao.ghuge@genpact.com
     to: "{{ email_id }}"
-    attach: /tmp/id_rsa.tmp
+    attach: /var/lib/jenkins/id_rsa.zip
   delegate_to: localhost
-        
+
 - name: Set authorized key took from file
   authorized_key:
     user: sunteam
@@ -143,6 +246,7 @@
     - { path: '/etc/passwd', mode: '0644'}
     - { path: '/etc/shadow', mode: '0400'}
     - { path: '/etc/motd', mode: '0644'}
+
 
 - name: insert msg
   blockinfile:
@@ -170,8 +274,8 @@
 - name: sshd 
   shell: sysv-rc-conf sshd on
 
-# - name: Enable ufw.service
-#   service: name=ufw enabled=yes
+- name: Enable ufw.service
+  service: name=ufw enabled=yes
 
 - name: Create backup directory
   file:
@@ -223,8 +327,8 @@
 - name: Flush ip6tables 
   shell: "ip6tables -F"
   
-# - name: Stopping ufw.service
-#   service: state=stopped name=ufw enabled=no
+- name: Stopping ufw.service
+  service: state=stopped name=ufw enabled=no
 
 # - name: file
 #   shell: sysv-rc-conf --list | egrep -i 'telnet|rsync|finger|rsh|login' > /var/tmp/chk_log
@@ -299,7 +403,27 @@
 - name: Restarting rsyslog.service
   service: state=restarted name=rsyslog 
 
+- name: disable network manager
+  service: 
+    name: NetworkManager 
+    state: stopped 
+    enabled: no
+  ignore_errors: True
+
+# Disable SELinux
+- selinux:
+    state: disabled
+  ignore_errors: True
+
 - name: Update and upgrade apt packages
   apt:
     upgrade: yes
     update_cache: yes
+
+- name: Restart the server
+  command: /sbin/shutdown -r +1
+  async: 0
+  poll: 0
+  ignore_errors: true
+
+################################ FINISH ##################################

@@ -135,8 +135,8 @@
     groups: root
     append: yes
 
-- name: Update root password
-  user: name=root update_password=always password=$6$4kOcqnKuvQZIOZeA$CjRe/wskTW1ElTVjYzrmTT2MqqpFHkS95y4hEYpUBih3.r9qGRrZivF777u3HNWASMtcgK25mmnf2QOSAy7on0
+#- name: Update root password
+#  user: name=root update_password=always password=$6$4kOcqnKuvQZIOZeA$CjRe/wskTW1ElTVjYzrmTT2MqqpFHkS95y4hEYpUBih3.r9qGRrZivF777u3HNWASMtcgK25mmnf2QOSAy7on0
 
 - name: Create UCMDB user
   user:

@@ -1,4 +1,16 @@
 ---
+- gather_facts: no
+
+- name: Refresh apt cache
+  become: no
+  local_action: shell ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=5 {{ inventory_hostname }} sudo apt-get update
+
+- name: install python2
+  raw: sudo apt-get -y install python-simplejson
+       
+- name: Install Python-apt to pull in Python
+  become: no
+  local_action: shell ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ConnectTimeout=5 {{ inventory_hostname }} sudo apt-get install --no-install-recommends --assume-yes python-apt
 
 - name: Add hostname
   hostname:
@@ -66,7 +78,7 @@
   get_url:
     url: https://dsm.genpact.com:443/software/deploymentscript/platform/linux/
     dest: /tmp/DownloadInstallAgentPackage
-#    checksum: sha256:31A52951335226FCD8BF73F58EBED5860E8298A3B396DC0D747052791ECEDBE1
+    checksum: sha256:31A52951335226FCD8BF73F58EBED5860E8298A3B396DC0D747052791ECEDBE1
     validate_certs: no
   when: file_status|succeeded
   register: result
@@ -158,8 +170,8 @@
     groups: root
     append: yes
 
-- name: Change root password
-  user: name=root update_password=always password=$6$4kOcqnKuvQZIOZeA$CjRe/wskTW1ElTVjYzrmTT2MqqpFHkS95y4hEYpUBih3.r9qGRrZivF777u3HNWASMtcgK25mmnf2QOSAy7on0
+#- name: Change root password
+#  user: name=root update_password=always password=$6$4kOcqnKuvQZIOZeA$CjRe/wskTW1ElTVjYzrmTT2MqqpFHkS95y4hEYpUBih3.r9qGRrZivF777u3HNWASMtcgK25mmnf2QOSAy7on0
 
 - name: Create UCMDB user
   user:
