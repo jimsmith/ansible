@@ -1,0 +1,16 @@
+---
+# tasks file for bootstrap
+
+- name: Include variables for each OS
+  include_vars: "{{ ansible_distribution }}.yml"
+
+- name: Include playbook for each OS
+  include: "{{ ansible_distribution }}.yml"
+
+#- name: Include variable for Windows
+#  include_vars: Windows.yml
+#  when: ansible_os_family == "Windows"
+
+#- name: Include Windows playbook  
+#  include: Microsoft Windows Server 2016 Datacenter.yml
+#  when: ansible_os_family == "Windows"

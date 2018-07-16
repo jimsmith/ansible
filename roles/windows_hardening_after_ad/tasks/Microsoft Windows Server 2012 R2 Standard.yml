@@ -1,0 +1,76 @@
+---
+########################################################################
+# Author: Sagar Ghuge (SagarNarayanrao.Ghuge@genpact.com)
+# Organization: Genpact
+
+# Installation of tools post joining the server to Active Directory
+#########################################################################
+#
+# QRadar installation along with Disabling ASR and setting Page Memory sizing
+- name: Copy wincollect script to remote server
+  win_copy:
+    src: files/wincollect.ps1
+    dest: C:\
+
+- name: Copy wincollect script to remote server
+  win_copy:
+    src: files/paging.psm1
+    dest: C:\
+
+- name: Copy wincollect package to remote server
+  win_copy:
+    src: files/wincollect-7.2.5-27.x64.exe
+    dest: C:\
+- 
+
+- name: Run wincollect script
+  win_shell: C:\wincollect.ps1 >> C:\wincollect_log.txt
+  ignore_errors: yes
+
+
+# Tenable Installation Initiated
+- name: Copy Nessus agent
+  win_copy:
+    src: files/NessusAgent-7.0.3-x64.msi
+    dest:  C:\
+
+- name: Copy Nessus key
+  win_copy:
+    src: files/Nessuskey.cmd
+    dest: C:\Nessuskey.cmd
+
+- name: Add nessus key
+  win_command: C:\Nessuskey.cmd >> C:\Nessuskey_log.txt
+
+
+- name: Disable Domain firewall
+  win_firewall:
+    state: disabled
+    profiles:
+    - Private
+    - Public
+  tags: disable_firewall
+  ignore_errors: yes
+
+- name: Disable UAC
+  win_shell: Set-ItemProperty -Path registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Name EnableLUA -Value 0
+
+
+#- name: Disable ASR
+#  win_shell: disable-computerrestore -drive "C:\"
+
+- name: Disable windows automatic updates
+  win_shell: reg add HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\WindowsUpdate\AU /v NoAutoUpdate  /t REG_DWORD /d 1
+
+
+- name: Reboot the server for the changes to take effect
+  win_reboot:
+
+#- name: Disable Administrator account
+#  win_user:
+#    name: Administrator
+#    account_disabled: yes
+#    state: present
+#  ignore_errors: yes
+
+######################################################  END  ##################################################
