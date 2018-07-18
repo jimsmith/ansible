@@ -190,16 +190,6 @@
     format: zip
   delegate_to: localhost
 
-- name: Send email to requester user
-  mail:
-    host: localhost
-    port: 25
-    subject: Ansible-report
-    body: Hello {{ requester_user }}, please find attached copy of your key for {{ IP_Address }} server. This is auto-generated email. For any queries write to genpactawssupport@genpact.com
-    from: sagarnarayanrao.ghuge@genpact.com
-    to: "{{ email_id }}"
-    attach: /var/lib/jenkins/id_rsa.zip
-  delegate_to: localhost
             
 - name: Set authorized key for Sunteam user took from file
   authorized_key:
@@ -416,6 +406,17 @@
   yum:
     name: '*'
     state: latest
+
+- name: Send email to requester user
+  mail:
+    host: localhost
+    port: 25
+    subject: Ansible-report
+    body: Hello {{ requester_user }}, please find attached copy of your key for {{ IP_Address }} server. This is auto-generated email. For any queries write to genpactawssupport@genpact.com
+    from: sagarnarayanrao.ghuge@genpact.com
+    to: "{{ email_id }}"
+    attach: /var/lib/jenkins/id_rsa.zip
+  delegate_to: localhost
 
 - name: Restart the server
   command: /sbin/shutdown -r +1
