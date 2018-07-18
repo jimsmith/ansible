@@ -57,7 +57,7 @@
   get_url:
     url: https://dsm.genpact.com:443/software/deploymentscript/platform/linux/
     dest: /tmp/DownloadInstallAgentPackage
-    checksum: sha256:31A52951335226FCD8BF73F58EBED5860E8298A3B396DC0D747052791ECEDBE1
+#    checksum: sha256:31A52951335226FCD8BF73F58EBED5860E8298A3B396DC0D747052791ECEDBE1
     validate_certs: no
   when: file_status|succeeded
   register: result

@@ -1,4 +1,10 @@
 ---
+#######################################################################################
+#
+# AUTHOR: SAGAR GHUGE
+# ORGANIZATION: GENPACT CORPORATE
+# PURPOSE: HARDENING OF RHEL7.0+ SERVER
+# #####################################################################################
 
 - name: Add hostname
   hostname:
@@ -48,14 +54,19 @@
   with_items:
     - "{{ packages }}"  
 
+- name: Copy files with permissions
+  copy:
+    src: files/NessusAgent-7.1.0-es7.x86_64.rpm
+    dest: /tmp/NessusAgent-7.1.0-es7.x86_64.rpm
+    mode: 0644
+
 # Install Nessus/Tenable agent
 - name: Install Tenable
   shell: |
     cd /tmp
-    sudo wget https://s3.ap-south-1.amazonaws.com/tenable-bucket/NessusAgent-7.0.3-amzn.x86_64.rpm
-    sudo rpm -ivh NessusAgent-7.0.3-amzn.x86_64.rpm
+    sudo rpm -ivh NessusAgent-7.1.0-es7.x86_64.rpm
     sudo /opt/nessus_agent/sbin/nessuscli agent link --key=9d4777f71733214d2a35566bd5f4bee3fda2b19462083c5f692dc86a2306d771 --host=cloud.tenable.com --port=443 --groups="ThirdPillar_AWS" --name="AWSCLI"
-    sudo /opt/nessus_agent/sbin/nessuscli agent start
+    sudo /sbin/service nessusagent start
 
 # Install TM-DSM agent
 - name: Download package file 
@@ -71,7 +82,7 @@
   get_url:
     url: https://dsm.genpact.com:443/software/deploymentscript/platform/linux/
     dest: /tmp/DownloadInstallAgentPackage
-    checksum: sha256:31A52951335226FCD8BF73F58EBED5860E8298A3B396DC0D747052791ECEDBE1
+#    checksum: sha256:31A52951335226FCD8BF73F58EBED5860E8298A3B396DC0D747052791ECEDBE1
     validate_certs: no
   when: file_status|succeeded
   register: result
@@ -155,38 +166,6 @@
     state: present
     key: "{{ lookup('file', './files/ucmdb.pub') }}"
 
-
-- name: Create requester user
-  user:
-    name: "{{ requester_user }}"
-    comment: "requester user"
-    createhome: yes
-    generate_ssh_key: yes
-    state: present
-
-- name: add to authorized_keys
-  shell: cat /home/{{ requester_user }}/.ssh/id_rsa.pub >> /home/{{ requester_user }}/.ssh/authorized_keys
-
-- name: Downloading pub key
-  fetch: src=/home/{{ requester_user }}/.ssh/id_rsa dest=/var/lib/jenkins/id_rsa flat=yes
-
-- name: Compress file to zip
-  archive:
-    path: /var/lib/jenkins/id_rsa
-    dest: /var/lib/jenkins/id_rsa.zip
-    format: zip
-  delegate_to: localhost
-
-- name: Send email to requester user
-  mail:
-    host: localhost
-    port: 25
-    subject: Ansible-report
-    body: Hello {{ requester_user }}, please find attached copy of your key for {{ IP_Address }} server. This is auto-generated email. For any queries write to genpactawssupport@genpact.com 
-    from: sagarnarayanrao.ghuge@genpact.com
-    to: "{{ email_id }}"
-    attach: /var/lib/jenkins/id_rsa.zip
-  delegate_to: localhost
 
 - name: Set authorized key took from file
   authorized_key:
@@ -407,6 +386,40 @@
 - selinux:
     state: disabled
   ignore_errors: True
+
+# Requester user creation and send private key over email.
+- name: Create requester user
+  user:
+    name: "{{ requester_user }}"
+    comment: "requester user"
+    createhome: yes
+    generate_ssh_key: yes
+    state: present
+
+- name: add to authorized_keys
+  shell: cat /home/{{ requester_user }}/.ssh/id_rsa.pub >> /home/{{ requester_user }}/.ssh/authorized_keys
+
+- name: Downloading pub key
+  fetch: src=/home/{{ requester_user }}/.ssh/id_rsa dest=/var/lib/jenkins/id_rsa flat=yes
+
+- name: Compress file to zip
+  archive:
+    path: /var/lib/jenkins/id_rsa
+    dest: /var/lib/jenkins/id_rsa.zip
+    format: zip
+  delegate_to: localhost
+
+- name: Send email to requester user
+  mail:
+    host: localhost
+    port: 25
+    subject: Ansible-report
+    body: Hello {{ requester_user }}, please find attached copy of your key for {{ IP_Address }} server. This is auto-generated email. For any queries write to genpactawssupport@genpact.com
+    from: sagarnarayanrao.ghuge@genpact.com
+    to: "{{ email_id }}"
+    attach: /var/lib/jenkins/id_rsa.zip
+  delegate_to: localhost
+
 
 - name: upgrade all packages
   yum:
